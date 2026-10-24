@@ -1,0 +1,116 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ordersystem-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+    release: monitoring
+spec:
+  groups:
+    - name: ordersystem.services
+      interval: 30s
+      rules:
+        # Alerta específica: Product Catalog caído
+        - alert: ProductCatalogDown
+          expr: up{job="product-catalog", namespace="ordersystem"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: product-catalog
+          annotations:
+            summary: "Product Catalog service is down"
+            description: "El servicio Product Catalog no responde. Todos los endpoints del catálogo están inaccesibles."
+        
+        # Alerta específica: Order Management caído
+        - alert: OrderManagementDown
+          expr: up{job="order-management", namespace="ordersystem"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: order-management
+          annotations:
+            summary: "Order Management service is down"
+            description: "El servicio Order Management no responde. No se pueden procesar nuevos pedidos."
+        
+        # Alerta de negocio: Alta tasa de órdenes rechazadas
+        - alert: HighOrderRejectionRate
+          expr: |
+            (
+              rate(ordermanagement_orders_rejected_total[5m]) 
+              / 
+              (rate(ordermanagement_orders_created_total[5m]) + rate(ordermanagement_orders_rejected_total[5m]))
+            ) > 0.3
+          for: 3m
+          labels:
+            severity: warning
+            service: order-management
+          annotations:
+            summary: "Alta tasa de órdenes rechazadas"
+            description: "Más del 30% de las órdenes están siendo rechazadas en los últimos 5 minutos. Posible problema con disponibilidad de productos o comunicación con el catálogo."
+        
+        # Alerta de negocio: Productos con bajo stock
+        - alert: LowProductInventory
+          expr: productcatalog_products_total < 5
+          for: 5m
+          labels:
+            severity: info
+            service: product-catalog
+          annotations:
+            summary: "Inventario de productos bajo"
+            description: "El catálogo tiene menos de 5 productos disponibles. Considere agregar más productos al inventario."
+        
+        # Alerta de latencia alta
+        - alert: HighRequestLatency
+          expr: |
+            histogram_quantile(0.95, 
+              sum(rate(productcatalog_requests_get_all_seconds_bucket[5m])) by (le)
+            ) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+            service: product-catalog
+          annotations:
+            summary: "Alta latencia en Product Catalog"
+            description: "El percentil 95 de latencia supera los 500ms. Posible degradación del servicio."
+        
+        # Alerta de error: Pod en CrashLoopBackOff
+        - alert: PodCrashLoopBackOff
+          expr: |
+            kube_pod_container_status_waiting_reason{
+              reason="CrashLoopBackOff",
+              namespace="ordersystem"
+            } > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod en CrashLoopBackOff en namespace ordersystem"
+            description: "El pod {{ $labels.pod }} está en estado CrashLoopBackOff. Revise los logs con: kubectl logs {{ $labels.pod }} -n ordersystem"
+        
+        # Alerta de recursos: Alto uso de CPU
+        - alert: HighCPUUsage
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{
+              namespace="ordersystem",
+              pod!=""
+            }[2m])) by (pod) > 0.8
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Alto uso de CPU en {{ $labels.pod }}"
+            description: "El uso de CPU del pod {{ $labels.pod }} supera el 80% durante más de 3 minutos."
+        
+        # Alerta de timeout: Delay artificial activado
+        - alert: ArtificialDelayEnabled
+          expr: productcatalog_artificial_delay_ms > 1000
+          for: 1m
+          labels:
+            severity: warning
+            service: product-catalog
+          annotations:
+            summary: "Delay artificial activado en Product Catalog"
+            description: "Se ha detectado un delay artificial de {{ $value }}ms en el Product Catalog. Esto puede causar timeouts en Order Management."
+

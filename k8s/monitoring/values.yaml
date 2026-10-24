@@ -1,0 +1,23 @@
+kube-prometheus-stack:
+  fullnameOverride: monitoring
+  prometheus:
+    service:
+      type: NodePort
+      nodePort: 30090
+    serviceMonitorSelector:
+      matchLabels:
+        monitoring: "true"
+  grafana:
+    service:
+      type: NodePort
+      nodePort: 30030
+    adminPassword: devpassword
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        searchNamespace: monitoring
+  alertmanager:
+    service:
+      type: NodePort
+      nodePort: 30040
