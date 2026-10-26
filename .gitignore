@@ -1,1 +1,38 @@
+# Archivos binarios grandes
 minikube-linux-amd64
+minikube-*.tar
+*.tar
+*.jar
+*.war
+
+# Docker
+product-catalog.tar
+order-management.tar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kubernetes
+kubeconfig
+
+# Temporary files
+*.tmp
+*.swp
+*~
