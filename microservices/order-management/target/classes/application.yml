@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-management
+
+management:
+  endpoints:
+    web:
+      base-path: '/'
+      exposure:
+        include: "health,prometheus"
+      path-mapping:
+        health: health
+        prometheus: metrics
+  endpoint:
+    prometheus:
+      enabled: true

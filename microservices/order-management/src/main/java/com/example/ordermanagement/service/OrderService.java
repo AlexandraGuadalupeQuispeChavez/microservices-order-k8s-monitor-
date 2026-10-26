@@ -29,7 +29,6 @@ public class OrderService {
                         MeterRegistry meterRegistry) {
         this.productCatalogClient = WebClient.builder()
                 .baseUrl(catalogUrl)
-                .responseTimeout(Duration.ofSeconds(2))
                 .build();
         this.ordersCreated = meterRegistry.counter("ordermanagement.orders.created");
         this.ordersRejected = meterRegistry.counter("ordermanagement.orders.rejected");
@@ -56,6 +55,7 @@ public class OrderService {
                             .uri("/api/products/{id}/availability", productId)
                             .retrieve()
                             .bodyToMono(Boolean.class)
+                            .timeout(Duration.ofSeconds(2))
                             .block();
                     if (available == null || !available) {
                         order.setStatus("REJECTED");

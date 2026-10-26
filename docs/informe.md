@@ -1030,7 +1030,6 @@ kubectl describe pod -n ordersystem -l app=product-catalog | grep -A5 "Liveness\
 
 ### 4. Captura de al menos una alerta en estado FIRING durante alguna casuística
 
-![alt text](image.png)
 **Acceso a Prometheus Alerts:**
 ```bash
 # URL de Prometheus Alerts

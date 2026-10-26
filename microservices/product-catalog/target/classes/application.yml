@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: product-catalog
+
+management:
+  endpoints:
+    web:
+      base-path: '/'
+      exposure:
+        include: "health,prometheus"
+      path-mapping:
+        health: health
+        prometheus: metrics
+  endpoint:
+    prometheus:
+      enabled: true
